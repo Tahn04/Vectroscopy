@@ -18,7 +18,7 @@ def main():
     config_path = '/Users/tahnjandai/Documents/VS_Code/vectroscopy/vectroscopy/config_files/JPL_config.yaml'
     
     # Uncomment to test config loading:
-    gdf = vp.Vectroscopy.from_config(config_path, process='M13_D2300_test').vectorize()
+    gdf = vp.Vectroscopy.from_config(config_path, process='M13_D2300_new_area').vectorize()
     
     # Example 2: From an array
     print("\n2. Processing from array...")

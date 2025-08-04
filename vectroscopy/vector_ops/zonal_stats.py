@@ -21,10 +21,14 @@ def list_zonal_stats(polygons, param_list, transform, stats_list):
     x_res = transform.a
     y_res = abs(transform.e)  # y res is negative for north-up images
     pixel_area = x_res * y_res
+    area = False
     # gdf = combine_polygons(polygons[1:])
     # gdf = polygons[0:2]
     results = gpd.GeoDataFrame()
     for param in param_list:
+        if "area" in stats_list:
+            stats_list.remove("area")
+            area = True
         stats_config = config_stats(stats_list, param.name)  # Get the configured stats for the parameter
         
         # raster_path = get_tiled_raster_path(param)
@@ -37,6 +41,8 @@ def list_zonal_stats(polygons, param_list, transform, stats_list):
             if f"geometry_{param.name}" in results.columns:
                 results = results.drop(columns=[f"geometry_{param.name}"])
                 # results = results.drop(columns=[f"value_{param.name}"])
+    if area:
+        results['AREA_SQK'] = results.geometry.area * 0.000001
     return results
 
 def zonal_stats(gdf, param, pixel_area, stats_config):
@@ -80,7 +86,6 @@ def config_stats(stats_list, param_name):
     stats_map = {
             'mean': f"{param_name}_MEN=mean",
             'median': f"{param_name}_MDN=median",
-            'area': f"{param_name}_SQK=count",
             'count': f"{param_name}_CNT=count",
             'min': f"{param_name}_MIN=min",
             'max': f"{param_name}_MAX=max",

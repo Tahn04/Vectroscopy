@@ -6,7 +6,7 @@ __GLOBAL_CONFIG__:
     - task: open
       iterations: 1
 
-M13_D2300_test:
+M13_D2300_new_area:
   path: # \\lasp-store\home\taja6898\Documents\Mars_Data\T1250_demo_parameters
   parameters:
     D2300:
@@ -41,7 +41,7 @@ M13_D2300_test:
     driver: ESRI Shapefile # "pandas", "ESRI Shapefile", GeoJSON, GPKG
     cs: GCS # PCS or GCS or any wkt/proj4
     simplify: 0
-    intermediates: True
+    intermediates: False
     # stats: ["area", "mean", "std", "5p", '25p', 'median', '75p', "95p"]
     stats: ["area", "mean", "std", '25p', 'median', '75p', 'min']
     colormap: Blues # matplotlib colormap
