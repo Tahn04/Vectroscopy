@@ -153,6 +153,41 @@ class ParameterManager:
         
         self.params = param_list
     
+    def _assign_thresholds(self, raster_list, param_list):
+        """
+        Assign thresholds to the raster data based on the parameters.
+        
+        Args:
+            raster_list: List of processed raster data
+            param_list: List of Parameter objects
+            
+        Returns:
+            List of thresholds
+        """
+        # Check if this is an indicator process (multiple parameters combined)
+        indicator = hasattr(self, 'indicator') and self.indicator
+        
+        if indicator:
+            size = len(raster_list)
+            thresholds = [i + 1 for i in range(size)]
+        else:
+            thresholds = param_list[0].thresholds
+        
+        base_check = self.config.get_base_check()
+        if base_check:
+            thresholds.insert(0, 0)
+        
+        return thresholds
+    
+    def set_indicator(self, value: bool):
+        """
+        Set the indicator flag.
+        
+        Args:
+            value: Boolean value to set the indicator
+        """
+        self.indicator = value
+
     def _check_name(self, name):
         """
         Check if the name is valid for the current driver.

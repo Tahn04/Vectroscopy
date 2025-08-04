@@ -19,7 +19,6 @@ from .process_manager import ProcessManager
 from .output_manager import OutputManager
 from .file_utilities import FileUtilities
 
-
 def find_default_config() -> str:
     """
     Find the default configuration file using proper resource management.
@@ -149,7 +148,7 @@ class Config:
         self.process_manager = ProcessManager(self)
         self.output_manager = OutputManager(self)
         self.file_utilities = FileUtilities(self)
-        
+
         self.load_config()
 
     # Delegate parameter-related methods to ParameterManager
@@ -199,6 +198,14 @@ class Config:
         """Check if the name is valid for a parameter or mask."""
         return self.parameter_manager._check_name(name)
 
+    def assign_thresholds(self, raster_list, param_list):
+        """Assign thresholds to the raster data based on the parameters."""
+        return self.parameter_manager._assign_thresholds(raster_list, param_list)
+    
+    def set_indicator(self, value: bool):
+        """Set the indicator flag."""
+        self.parameter_manager.set_indicator(value)
+
     # Delegate process-related methods to ProcessManager
     def set_current_process(self, process_name):
         """Set the current process name."""
@@ -211,6 +218,10 @@ class Config:
     def get_processes(self):
         """Return the processes dictionary from the config."""
         return self.process_manager.get_processes()
+    
+    def get_current_process_name(self):
+        """Get the name of the current process."""
+        return self.process_manager.get_current_process_name()
     
     def get_current_process(self):
         """Get the current process configuration."""
@@ -252,6 +263,10 @@ class Config:
     def get_output_path(self):
         """Get the output path for the current process."""
         return self.output_manager.get_output_path()
+    
+    def get_intermediates(self):
+        """Check if intermediate files should be saved."""
+        return self.output_manager.get_intermediates()
 
     def get_driver(self):
         """Get the driver for the current process."""
@@ -358,7 +373,7 @@ class Config:
             try:
                 with open(self.yaml_file, 'r') as file:
                     self._config = yaml.safe_load(file)
-                
+                self._config = {'processes': self._config}
                 # Validate the loaded configuration
                 self._validate_config()
                 
@@ -429,6 +444,8 @@ class Config:
                 output = process_config['output']
                 if not isinstance(output, dict):
                     raise ValueError(f"Process '{process_name}': 'output' must be a dictionary")
+            if process_name == "__GLOBAL__" or process_name == "__GLOBAL_CONFIG__":
+                self.process_manager.default_process = process_config
 
     def _validate_global_settings(self):
         """Validate global configuration settings."""

@@ -65,7 +65,9 @@ def zonal_stats(gdf, param, pixel_area, stats_config):
                 gdf[f"{param_name}_SQK"] = gdf[f"{param_name}_SQK"] * pixel_area * 0.000001
             else:
                 gdf = gdf.rename(columns={f"{param_name}_SQK": f"{param_name}_CNT"})
-        
+
+            gdf['DIFF'] = gdf[f"Threshold"] - gdf[f"{param_name}_MIN"]
+
             float_cols = gdf.select_dtypes(include=['float']).columns
             gdf[float_cols] = gdf[float_cols].round(5) 
         except Exception as e:
@@ -109,5 +111,8 @@ def percintile_rename(gdf):
     """ Rename percentile columns in a GeoDataFrame."""
     for col in gdf.columns:
         if isinstance(col, str) and col and col[-1].isdigit():
+            if not col[-2] == '_':
+                number = f"0{col[-1]}"
+                gdf = gdf.rename(columns={col: f"{col[:-1]}P{number}"})
             gdf = gdf.rename(columns={col: f"{col}P"})
     return gdf

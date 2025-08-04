@@ -94,6 +94,8 @@ def save_raster(raster, output_path, file_name, profile):
 
 def save_raster_fast_rasterio(array, crs, transform, filepath):
     """Save with rasterio using fast settings"""
+    if array.dtype == bool:
+        array = array.astype(np.uint8)
     if transform is not None and not isinstance(transform, Affine):
         transform = Affine(transform[1], transform[2], transform[0],
                          transform[4], transform[5], transform[3])

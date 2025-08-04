@@ -2,7 +2,6 @@
 Process-specific configuration management.
 """
 
-
 class ProcessManager:
     """
     Handles process-specific configuration operations.
@@ -12,7 +11,8 @@ class ProcessManager:
         self.config = config_instance
         # Initialize curr_process from the config instance if it exists
         self.curr_process = getattr(config_instance, 'process', None)
-    
+        self.default_process = None
+
     def set_current_process(self, process_name):
         """Set the current process name."""
         if not isinstance(process_name, str):
@@ -35,6 +35,10 @@ class ProcessManager:
         """Return the processes dictionary from the config."""
         return self.config._config.get('processes', {})
     
+    def get_current_process_name(self):
+        """Get the name of the current process."""
+        return self.curr_process
+
     def get_current_process(self):
         """Get the current process configuration."""
         # Try to get the current process from config if not set locally
@@ -81,7 +85,6 @@ class ProcessManager:
     def get_median_config(self):
         """Get the median configuration from the config."""
         try:
-            curr_process = self.get_current_process()
             return self.get_nested('processes', self.curr_process, 'thresholds', 'median', default={})
         except ValueError:
             return {}
@@ -89,23 +92,22 @@ class ProcessManager:
     def get_masks(self):
         """Get mask names for the current process."""
         try:
-            curr_process = self.get_current_process()
             return self.get_nested('processes', self.curr_process, 'thresholds', 'masks', default={})
         except ValueError:
             return {}
 
     def get_pipeline(self):
         """Get the pipeline steps for the current process."""
-        try:
-            curr_process = self.get_current_process()
-            return self.get_nested('processes', self.curr_process, 'pipeline', default=[])
-        except ValueError:
-            return []
-    
+        # default = self.get_nested(self.default_process, 'pipeline', default=[])
+        default = []
+        return self.get_nested('processes', self.curr_process, 'pipeline', default=default)
+
     def get_dir_path(self):
         """Get the directory path for the current process."""
-        process = self.get_current_process()
-        return process.get("path", "") 
+        try:
+            return self.get_nested('processes', self.curr_process, 'vectorization', 'output_dict', default={})
+        except ValueError:
+            return {}
     
     def get_param_names(self):
         """Get the parameter names from the current process configuration."""

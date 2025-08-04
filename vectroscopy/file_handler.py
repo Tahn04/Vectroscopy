@@ -4,7 +4,7 @@ import shutil
 
 class FileHandler:
     """
-    A singleton class to handle file operations for mineral mapping.
+    A singleton class to handle file operations.
     """
     _instance = None
 
@@ -18,9 +18,25 @@ class FileHandler:
         if self._initialized:
             return
         self.temp_dir = tempfile.mkdtemp()
+        self.dir_path = None
         self._initialized = True
 
-    def create_temp_file(self, prefix, suffix):
+    def set_config(self, config):
+        self.config = config
+        self.dir_path = self.config.get_output_path()
+
+    def set_directory(self, dir_path):
+        """
+        Set the directory path for file operations.
+        
+        Args:
+            dir_path (str): Path to the directory.
+        """
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        self.dir_path = dir_path
+
+    def create_file(self, prefix, suffix, temp=False):
         """
         Create a temporary file in the temporary directory.
 
@@ -31,7 +47,10 @@ class FileHandler:
         Returns:
             str: Path to the created temporary file.
         """
-        file_path = os.path.join(self.temp_dir, f"{prefix}_temp.{suffix}")
+        if temp:
+            file_path = os.path.join(self.temp_dir, f"{prefix}_temp.{suffix}")
+        else:
+            file_path = os.path.join(self.dir_path, f"{prefix}.{suffix}")
         return file_path
 
     def create_output_filename(self, driver, name, text):
@@ -48,9 +67,13 @@ class FileHandler:
             raise ValueError(f"Unknown driver: {driver}")
         # Simple sanitization: replace spaces with underscores
         safe_name = name.replace(" ", "_")
-        return f"{safe_name}_{text}.{file_extension}"
-    
-    def get_directory(self):
+        if text:
+            name = f"{safe_name}_{text}"
+        else:
+            name = safe_name
+        return f"{name}.{file_extension}"
+
+    def get_temp_directory(self):
         """
         Get the path to the temporary directory.
 
@@ -67,5 +90,4 @@ class FileHandler:
             shutil.rmtree(self.temp_dir)
         self.temp_dir = None
         self._initialized = False
-    
     

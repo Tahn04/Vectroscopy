@@ -40,8 +40,8 @@ class ProcessingPipeline:
                 self.config.set_current_process(process)
                 if self.config.yaml:
                     self.config.config_yaml()
-                fh.FileHandler()
-                print(fh.FileHandler().get_directory())
+                fh.FileHandler().set_config(self.config)
+                print(fh.FileHandler().get_temp_directory())
                 param_list = self.config.get_parameters_list()
                 processed_rasters = self.process_parameters(param_list)
                 vectors =  self.vectorizer.vectorize(processed_rasters, param_list, self.crs, self.transform)
@@ -67,26 +67,25 @@ class ProcessingPipeline:
         # Separate masks from parameters
         param_list, post_processing_masks = self.raster_processor.get_post_processing_masks(param_list)
         
-        # Create combined mask
-        full_mask = self.raster_processor.complete_mask(param_list, post_processing_masks)
-        
-        # Apply thresholds
-        raster_list = self.raster_processor.threshold(param_list, full_mask)
-        
-        end_time = time.time()
-        print(f"Threshold processing execution time: {end_time - start_time:.2f} seconds")
-        
-        # Extract spatial information from first parameter
         target_param = param_list[0]
         self.crs = target_param.crs
         self.transform = target_param.transform
+
+        # Create combined mask
+        complete_mask = self.raster_processor.complete_mask(param_list, post_processing_masks)
+        self.raster_processor._save_raster("Masks", complete_mask, self.crs, self.transform)
+        # Apply thresholds
+        raster_list = self.raster_processor.threshold(param_list, complete_mask)
+
+        end_time = time.time()
+        print(f"Threshold processing execution time: {end_time - start_time:.2f} seconds")
 
         # Apply processing pipeline (filters, etc.)
         raster_list = self.raster_processor.apply_processing_pipeline(raster_list)
 
         # Clean rasters with masks
         start_time = time.time()
-        raster_list = self.raster_processor.clean_rasters(raster_list, param_list, full_mask)
+        raster_list = self.raster_processor.clean_rasters(raster_list, param_list, complete_mask)
         end_time = time.time()
         print(f"Clean rasters execution time: {end_time - start_time:.2f} seconds")
         

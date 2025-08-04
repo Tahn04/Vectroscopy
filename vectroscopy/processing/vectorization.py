@@ -33,7 +33,7 @@ class Vectorizer:
         """
         simplification_level = self.config.get_simplification_level() 
         driver = self.config.get_driver()
-        thresholds = self._assign_thresholds(raster_list, param_list)
+        thresholds = self.config.assign_thresholds(raster_list, param_list)
         stats_list = self.config.get_stats()
 
         start_time = time.time()
@@ -78,8 +78,9 @@ class Vectorizer:
             driver: Output driver type
         """
         stack = self.config.get_stack()
+        intermediates = self.config.get_intermediates()
         output_dict = self.config.get_output_path()
-        name = self.config.get_current_process()["name"]
+        name = self.config.get_current_process_name()
         
         if stack is False:
             thresholds = gdf['Threshold'].unique()
@@ -91,32 +92,14 @@ class Vectorizer:
                     filename = fh.FileHandler().create_output_filename(driver, name, threshold)
                     vo.save_gdf_to_file(thresh_gdf, new_output_dict, filename, driver=driver)
                 return None
-                
+        elif intermediates:
+            # Save intermediate results
+            filename = fh.FileHandler().create_output_filename(driver, name, "stack")
+            new_output_dict = os.path.join(output_dict, str(name))
+            vo.save_gdf_to_file(gdf, new_output_dict, filename, driver=driver)
+            return None
+        
         filename = fh.FileHandler().create_output_filename(driver, name, "stack")
         vo.save_gdf_to_file(gdf, output_dict, filename, driver=driver)
     
-    def _assign_thresholds(self, raster_list, param_list):
-        """
-        Assign thresholds to the raster data based on the parameters.
-        
-        Args:
-            raster_list: List of processed raster data
-            param_list: List of Parameter objects
-            
-        Returns:
-            List of thresholds
-        """
-        # Check if this is an indicator process (multiple parameters combined)
-        indicator = hasattr(self, 'indicator') and self.indicator
-        
-        if indicator:
-            size = len(raster_list)
-            thresholds = [i + 1 for i in range(size)]
-        else:
-            thresholds = param_list[0].thresholds
-        
-        base_check = self.config.get_base_check()
-        if base_check:
-            thresholds.insert(0, 0)
-        
-        return thresholds
+    

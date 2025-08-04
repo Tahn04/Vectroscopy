@@ -1,6 +1,7 @@
 """
 Raster processing operations and utilities.
 """
+import os
 import time
 import numpy as np
 import xarray as xr
@@ -18,6 +19,7 @@ class RasterProcessor:
     def __init__(self, config):
         self.config = config
         self.indicator = False
+        self.intermediates = config.get_intermediates()
     
     def threshold(self, param_list, mask=None):
         """
@@ -32,6 +34,10 @@ class RasterProcessor:
         """
         param_thresholded_list = []
         masks_thresholded_list = []
+
+        target_param = param_list[0]
+        self.crs = target_param.crs
+        self.transform = target_param.transform
         
         for param in param_list:
             median_iterations = param.get_median_config().get("iterations", 0)
@@ -46,12 +52,13 @@ class RasterProcessor:
             # Apply mask if provided
             if mask is not None:
                 preprocessed = preprocessed.where(mask, np.nan)
-                
-            self._save_raster(preprocessed, param)
+
+            preprocessed_path = self._save_raster(f"{param.name}_preprocessed", preprocessed, param.crs, param.transform)
+            param.preprocessed_path = preprocessed_path
             final = time.time()
             print(f"Raster saved execution time: {final - mid:.2f} seconds")
         
-            # Separate masks from parameters
+            # Apply thresholds
             if param.mask:
                 masks_thresholded_list.append(param.threshold(preprocessed, param.thresholds))
             else:
@@ -70,12 +77,13 @@ class RasterProcessor:
             Processed raster list
         """
         show_rasters = False
+        ran_tasks = ""
         if show_rasters:
             ro.show_raster(raster_list[0], title="threshold- Processed Raster lowest")
             
         for task in self.config.get_pipeline() if self.config.get_pipeline() else []:
             task_name = task.get("task", "")
-            
+
             if "majority" in task_name:
                 raster_list = self._apply_majority_filter(raster_list, task, show_rasters, task_name)
             elif "boundary" in task_name:
@@ -84,7 +92,15 @@ class RasterProcessor:
                 raster_list = self._apply_sieve_filter(raster_list, task, show_rasters, task_name)
             elif "open" in task_name:
                 raster_list = self._apply_binary_opening(raster_list, task, show_rasters, task_name)
-        
+
+            if self.intermediates:
+                task_lookup = {"majority": "MAJ", "boundary": "BDR", "sieve": "SIEV", "open": "OPN"}
+                iterations = self.config.get_task_param(task, "iterations")
+                ran_tasks += f"_{task_lookup.get(task_name, task_name)}{iterations}"
+                name = self.config.get_current_process_name()
+                raster_name = name + ran_tasks
+                self._save_raster(raster_name, raster_list[0], self.crs, self.transform)
+
         return raster_list
     
     def clean_rasters(self, raster_list, param_list, full_mask):
@@ -172,18 +188,25 @@ class RasterProcessor:
         return param_list, keep_shape_masks
     
     # Private methods
-    def _save_raster(self, data, param):
-        """Save raster data if stats are to be computed."""
+    def _save_raster(self, text, data, crs, transform):
+        """Save raster data and return the path."""
         if self.config.get_stats():
             from .. import file_handler as fh
-            preprocessed_path = fh.FileHandler().create_temp_file("preprocessed", "tif")
-            ro.save_raster_fast_rasterio(data, param.crs, param.transform, preprocessed_path)
-            param.preprocessed_path = preprocessed_path
-    
+            if self.intermediates:
+                curr_path = self.config.get_dir_path()
+                process_name = self.config.get_current_process_name()
+                new_output_dict = os.path.join(curr_path, process_name, "intermediates")
+                fh.FileHandler().set_directory(new_output_dict)
+                preprocessed_path = fh.FileHandler().create_file(f"{text}", "tif")
+            else:
+                preprocessed_path = fh.FileHandler().create_file(f"{text}", "tif", temp=True)
+            ro.save_raster_fast_rasterio(data, crs, transform, preprocessed_path)
+        return preprocessed_path
+
     def _combine_thresholded_rasters(self, param_thresholded, masks_thresholded=[]):
         """Combine thresholded rasters with detailed metadata handling."""
         if len(masks_thresholded) > 0 or len(param_thresholded) > 1:
-            self.indicator = True
+            self.config.set_indicator(True)
             
             if param_thresholded:
                 threshold_coords = param_thresholded[0].coords['threshold']

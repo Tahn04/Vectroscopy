@@ -49,8 +49,8 @@ def vectorize_raster(raster, crs=None, transform=None, threshold=None, simplify_
     for geom, val in results:
         if val != 0:
             poly = shape(geom)
-            if simplify_tol:
-                poly = poly.simplify(simplify_tol, preserve_topology=True)
+            # if simplify_tol:
+            #     poly = poly.simplify(simplify_tol, preserve_topology=True)
             geoms.append(poly)
             vals.append(val)
 
@@ -58,4 +58,7 @@ def vectorize_raster(raster, crs=None, transform=None, threshold=None, simplify_
         {"value": vals, "Threshold": threshold, "geometry": geoms},
         crs=crs
     )
+    if simplify_tol:
+        # gdf.geometry = gdf.geometry.simplify(simplify_tol, preserve_topology=True)
+        gdf.geometry = gdf.geometry.simplify_coverage(simplify_tol)
     return gdf
