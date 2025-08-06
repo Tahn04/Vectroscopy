@@ -41,6 +41,10 @@ def list_zonal_stats(polygons, param_list, transform, stats_list):
             if f"geometry_{param.name}" in results.columns:
                 results = results.drop(columns=[f"geometry_{param.name}"])
                 # results = results.drop(columns=[f"value_{param.name}"])
+            if f"Threshold_{param.name}" in results.columns:
+                results = results.drop(columns=[f"Threshold_{param.name}"])
+
+    # results.geometry = results.geometry.simplify_coverage(150)
     if area:
         results['AREA_SQK'] = results.geometry.area * 0.000001
     return results
@@ -64,15 +68,15 @@ def zonal_stats(gdf, param, pixel_area, stats_config):
                 progress=True,
                 max_cells_in_memory=1000000000  # Adjust as needed for large datasets
             )
-            temp = percintile_rename(temp)
+            # temp = percintile_rename(temp)
             gdf = pd.concat([empty_gdf, temp], ignore_index=True)
 
-            if pixel_area and pixel_area > 0:
-                gdf[f"{param_name}_SQK"] = gdf[f"{param_name}_SQK"] * pixel_area * 0.000001
-            else:
-                gdf = gdf.rename(columns={f"{param_name}_SQK": f"{param_name}_CNT"})
+            # if pixel_area and pixel_area > 0:
+            #     gdf[f"{param_name}_SQK"] = gdf[f"{param_name}_SQK"] * pixel_area * 0.000001
+            # else:
+            #     gdf = gdf.rename(columns={f"{param_name}_SQK": f"{param_name}_CNT"})
 
-            gdf['DIFF'] = gdf[f"Threshold"] - gdf[f"{param_name}_MIN"]
+            gdf[f'{param_name}_DIF'] = gdf[f"Threshold"] - gdf[f"{param_name}_MIN"]
 
             float_cols = gdf.select_dtypes(include=['float']).columns
             gdf[float_cols] = gdf[float_cols].round(5) 

@@ -132,7 +132,7 @@ class ParameterManager:
             param_operator = parameters.get('operator', ">")
             median_config = parameters.get('median', {})
 
-            param = pm.Parameter(name=param_name, raster_path=param_path, thresholds=param_thresholds)
+            param = pm.Parameter(name=self._check_name(param_name), raster_path=param_path, thresholds=param_thresholds)
             param.operator = param_operator
             param.median_config = median_config
             param_list.append(param)

@@ -2,6 +2,7 @@
 Core processing pipeline orchestration.
 """
 import time
+import numpy as np
 from tqdm import tqdm
 from . import raster_processor as rp
 from . import vectorization as vec
@@ -35,7 +36,7 @@ class ProcessingPipeline:
             GeoDataFrame or None: Processed vector data
         """
         process_list = self.config.process_list
-        for process in process_list:
+        for process in tqdm(process_list):
             try:
                 self.config.set_current_process(process)
                 if self.config.yaml:
@@ -66,6 +67,7 @@ class ProcessingPipeline:
 
         # Separate masks from parameters
         param_list, post_processing_masks = self.raster_processor.get_post_processing_masks(param_list)
+        self.raster_processor.set_intermediates()
         
         target_param = param_list[0]
         self.crs = target_param.crs
@@ -73,7 +75,7 @@ class ProcessingPipeline:
 
         # Create combined mask
         complete_mask = self.raster_processor.complete_mask(param_list, post_processing_masks)
-        self.raster_processor._save_raster("Masks", complete_mask, self.crs, self.transform)
+        # self.raster_processor._save_raster("Masks", complete_mask, self.crs, self.transform)
         # Apply thresholds
         raster_list = self.raster_processor.threshold(param_list, complete_mask)
 

@@ -19,7 +19,7 @@ class RasterProcessor:
     def __init__(self, config):
         self.config = config
         self.indicator = False
-        self.intermediates = config.get_intermediates()
+        self.intermediates = None
     
     def threshold(self, param_list, mask=None):
         """
@@ -187,9 +187,14 @@ class RasterProcessor:
                 param_list.remove(param)
         return param_list, keep_shape_masks
     
+    def set_intermediates(self):
+        """Set whether to save intermediate results."""
+        self.intermediates = self.config.get_intermediates()
+    
     # Private methods
     def _save_raster(self, text, data, crs, transform):
         """Save raster data and return the path."""
+        preprocessed_path = None  
         if self.config.get_stats():
             from .. import file_handler as fh
             if self.intermediates:

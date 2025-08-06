@@ -1,3 +1,4 @@
+import tempfile
 import yaml
 import os
 from .. import parameter as pm
@@ -19,101 +20,6 @@ from .process_manager import ProcessManager
 from .output_manager import OutputManager
 from .file_utilities import FileUtilities
 
-def find_default_config() -> str:
-    """
-    Find the default configuration file using proper resource management.
-    
-    Returns:
-        str: Path to the default configuration file
-        
-    Raises:
-        FileNotFoundError: If no default config file can be found
-    """
-    # First, try to find config files in the package resources
-    try:
-        config_files = files("vectroscopy.config_files")
-        
-        # Try to find config.yaml first
-        for config_name in ["config.yaml", "default.yaml"]:
-            try:
-                config_file = config_files / config_name
-                if config_file.is_file():
-                    # Extract to a temporary location so it can be read
-                    with as_file(config_file) as config_path:
-                        # Copy to a more permanent location in user's temp directory
-                        import tempfile
-                        import shutil
-                        temp_dir = tempfile.gettempdir()
-                        permanent_config = os.path.join(temp_dir, f"vectroscopy_{config_name}")
-                        shutil.copy2(str(config_path), permanent_config)
-                        return permanent_config
-            except (FileNotFoundError, AttributeError):
-                continue
-    except Exception:
-        pass
-    
-    # Fallback: try to find config in various common locations
-    search_paths = [
-        # Current working directory
-        os.path.join(os.getcwd(), "config.yaml"),
-        os.path.join(os.getcwd(), "config", "config.yaml"),
-        # User's home directory
-        os.path.expanduser("~/.vectroscopy/config.yaml"),
-        # System-wide config (Unix-like systems)
-        "/etc/vectroscopy/config.yaml",
-        # Development fallback (relative to package)
-        os.path.abspath(os.path.join(os.path.dirname(__file__), "../../config/config.yaml")),
-    ]
-    
-    for path in search_paths:
-        if os.path.exists(path):
-            return path
-    
-    # If no config found, create a minimal default one
-    import tempfile
-    temp_config = os.path.join(tempfile.gettempdir(), "vectroscopy_default_config.yaml")
-    create_default_config_file(temp_config)
-    return temp_config
-
-
-def create_default_config_file(config_path: str):
-    """
-    Create a minimal default configuration file.
-    
-    Args:
-        config_path: Path where to create the config file
-    """
-    default_config = {
-        "processes": {
-            "default": {
-                "name": "default",
-                "description": "Default processing configuration",
-                "parameters": {},
-                "masks": {},
-                "pipeline": [
-                    {"task": "raster_ops", "parameters": {}}
-                ],
-                "output": {
-                    "path": "./output",
-                    "driver": "GeoJSON",
-                    "statistics": True,
-                    "base_mode": False,
-                    "simplification_level": 0.0,
-                    "stack_results": False
-                }
-            }
-        },
-        "median": {
-            "iterations": 1,
-            "size": 3
-        }
-    }
-    
-    os.makedirs(os.path.dirname(config_path), exist_ok=True)
-    with open(config_path, 'w') as f:
-        yaml.dump(default_config, f, default_flow_style=False, indent=2)
-
-
 class Config:
     """
     Configuration handler for the mineral mapping application.
@@ -126,19 +32,6 @@ class Config:
     """
     def __init__(self, yaml_file=None, process=None):
         self.yaml = True
-        if yaml_file is None:
-            self.yaml = False
-            try:
-                default_path = find_default_config()
-            except FileNotFoundError as e:
-                raise FileNotFoundError(
-                    "No configuration file found. Please provide a config file path or "
-                    "ensure a default config.yaml exists in your working directory."
-                ) from e
-        else:
-            default_path = yaml_file
-        
-        self.yaml_file = default_path
         self._config = None
         self.process = process
         self.process_list = []
@@ -149,7 +42,22 @@ class Config:
         self.output_manager = OutputManager(self)
         self.file_utilities = FileUtilities(self)
 
-        self.load_config()
+        if yaml_file is None:
+            self.yaml = False
+            try:
+                with tempfile.TemporaryDirectory() as tmpdir: # This is kinda weird
+                    default_path = self.file_utilities.find_default_config(tmpdir)
+                    self.yaml_file = default_path
+                    self.load_config()
+            except FileNotFoundError as e:
+                raise FileNotFoundError(
+                    "No configuration file found. Please provide a config file path or "
+                    "ensure a default config.yaml exists in your working directory."
+                ) from e
+        else:
+            default_path = yaml_file
+            self.yaml_file = default_path
+            self.load_config()
 
     # Delegate parameter-related methods to ParameterManager
     def get_parameters_list(self):
@@ -354,7 +262,11 @@ class Config:
         """
         param_file_dicts = self.get_nested('processes', self.process, 'parameters', default={})
         mask_file_dicts = self.get_nested('processes', self.process, 'masks', default={})
-        
+
+        # file_path = self.get_nested('processes', self.process, 'path', default={})
+        # if file_path:
+        #     self.file_utilities.config_path(file_path, param_file_dicts, mask_file_dicts)
+
         self.init_parameters(param_file_dicts, mask_file_dicts)
 
     def init_parameters(self, param_file_dicts, mask_file_dicts):
@@ -514,7 +426,7 @@ class Config:
             print(f"Could not copy template config: {e}")
         
         # Fallback: create a default config
-        create_default_config_file(config_path)
+        fh.FileHandler.create_default_config_file(config_path)
         print(f"Default configuration file created at: {config_path}")
         return cls(config_path)
 

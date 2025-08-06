@@ -22,7 +22,7 @@ class Vectroscopy:
         return cls(config)
 
     @classmethod
-    def from_array(cls, array, thresholds=None, crs=None, transform=None, name=None, median_iterations=1, median_size=3):
+    def from_array(cls, array, thresholds=None, crs=None, transform=None, name=None, median_iterations=1, median_size=3, process="default"):
         """
         Create an instance of Vectroscopy from an array.
         
@@ -38,7 +38,7 @@ class Vectroscopy:
         Returns:
             Vectroscopy: An instance of the Vectroscopy class.
         """
-        config = Config(process="default")  # could be where you have multiple processing profiles.
+        config = Config(process=process)  # could be where you have multiple processing profiles.
         config.add_parameter(array=array, thresholds=thresholds, crs=crs, transform=transform, name=name, median_iterations=median_iterations, median_size=median_size)
         return cls(config)
 

@@ -1,15 +1,16 @@
-__GLOBAL_CONFIG__:
-  pipeline:
-    - task: majority
-      iterations: 1
-      size: 3
-    - task: open
-      iterations: 1
+# __GLOBAL_CONFIG__:
+#   pipeline:
+#     - task: majority
+#       iterations: 1
+#       size: 3
+#     - task: open
+#       iterations: 1
 
-M13_D2300_new_area:
-  path: # \\lasp-store\home\taja6898\Documents\Mars_Data\T1250_demo_parameters
+M13_D2300_Very_SimpleB:
+  path: #/Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters
   parameters:
     D2300:
+      # ext: .IMG
       path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_BAL1_EQU_IMP_D2300.IMG
       # path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/T1250 Demo Parameters/T1250_cdodtot_BAL1_D2300.IMG
       # path: \\lasp-store\home\taja6898\Documents\Mars_Data\LatitudeBands_demo_parameters\MC_789ABCDEFGHIJKLM_BAL1_EQU_IMP_D2300_MOS_IMP.IMG
@@ -22,7 +23,7 @@ M13_D2300_new_area:
       median:
         iterations: 1
   masks: 
-    D2300_mask:
+    D2300_GID:
       path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_NSP_EQU_IMP_D2300_GID.IMG
       thresholds: [1]
       keep_shape: True
@@ -30,106 +31,168 @@ M13_D2300_new_area:
   pipeline:
     - task: majority
       iterations: 1
-    - task: boundary
-      iterations: 1
-    #   size: 3
-    # - task: sieve
+    # - task: boundary
     #   iterations: 1
-    - task: open
+    - task: sieve
       iterations: 1
+    # - task: open
+    #   iterations: 1
   vectorization:
     driver: ESRI Shapefile # "pandas", "ESRI Shapefile", GeoJSON, GPKG
     cs: GCS # PCS or GCS or any wkt/proj4
-    simplify: 0
-    intermediates: False
+    simplify: 300
+    intermediates: Falsa
     # stats: ["area", "mean", "std", "5p", '25p', 'median', '75p', "95p"]
-    stats: ["area", "mean", "std", '25p', 'median', '75p', 'min']
+    stats: ["area", "mean", "std", "5p", '25p', 'median', '75p', "95p", "min"]
     colormap: Blues # matplotlib colormap
-    output_dict: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/vectroscopy_outputs
+    output_dict: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/meeting_with_Frank
     base: 
       show: True
       stats: [] #["area", "mean", "std", "min", "max", '25p', '75p']
 
-PolySulfate:
+# M13_BD1900_2_BC_BDR2:
+  # path: #/Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters
+  # parameters:
+  #   BD1900_2:
+  #     # ext: .IMG
+  #     path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_BAL1_EQU_IMP_BD1900_2.IMG
+  #     # path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/T1250 Demo Parameters/T1250_cdodtot_BAL1_D2300.IMG
+  #     # path: \\lasp-store\home\taja6898\Documents\Mars_Data\LatitudeBands_demo_parameters\MC_789ABCDEFGHIJKLM_BAL1_EQU_IMP_D2300_MOS_IMP.IMG
+  #     # - \\lasp-store\home\taja6898\Documents\Mars_Data\Global_demo_parameters\TEST02_D2300.IMG
+  #     # thresholds: [0.005, 0.0075, 0.01, 0.0125, 0.015, 0.0175, 0.02, 0.0225, 0.025, 0.0275]
+  #     # - [0.0075, 0.0175, 0.0275]
+  #     thresholds: [0.005, 0.014, 0.023, 0.032] # what ran on the arcpy code
+  #     # thresholds: [75p, 85p, 95p]
+  #     # - [0.0275]
+  #     median:
+  #       iterations: 3
+  # masks: 
+  #   BD1900_2_GID:
+  #     path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_NSP_EQU_IMP_BD1900_2_GID.IMG
+  #     thresholds: [1]
+  #     keep_shape: True
+
+  # pipeline:
+  #   - task: majority
+  #     iterations: 2
+  #   - task: boundary
+  #     iterations: 2
+  #     size: 3
+  #   - task: sieve
+  #     iterations: 1
+  #   - task: open
+  #     iterations: 1
+  # vectorization:
+  #   driver: ESRI Shapefile # "pandas", "ESRI Shapefile", GeoJSON, GPKG
+  #   cs: GCS # PCS or GCS or any wkt/proj4
+  #   simplify: 0
+  #   intermediates: True
+  #   # stats: ["area", "mean", "std", "5p", '25p', 'median', '75p', "95p"]
+  #   stats: ["area", "mean", "std", "5p", '25p', 'median', '75p', "95p", "min"]
+  #   colormap: Blues # matplotlib colormap
+  #   output_dict: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/meeting_with_Frank
+  #   base: 
+  #     show: True
+  #     stats: [] #["area", "mean", "std", "min", "max", '25p', '75p']
+
+PolySulfate_SIV_SB150:
   path:
   parameters:
-    BD1900_2:
+    BD1900:
       path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_BAL1_EQU_IMP_BD1900_2.IMG
       median:
         iterations: 3
       thresholds: [0.012, 0.015, 0.017]
-    SINDEX2:
+    SINDEX:
       path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_BAL1_EQU_IMP_SINDEX2.IMG
       median:
         iterations: 3
       thresholds: [0.01, 0.015, 0.02]
   
   masks:
-    BD1500_2:
+    BD1500:
       path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_BAL1_EQU_IMP_BD1500_2.IMG
       thresholds: [0.005]
       median:
         iterations: 1
-    BD2100_2:
+    BD2100:
       path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_BAL1_EQU_IMP_BD2100_2.IMG
       thresholds: [0.01]
       median:
         iterations: 1
 
+    BD1900_2_mask:
+      path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_NSP_EQU_IMP_BD1900_2_GID.IMG
+      thresholds: [1]
+      keep_shape: True
+    SINDEX2_mask:
+      path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_NSP_EQU_IMP_SINDEX2_GID.IMG
+      thresholds: [1]
+      keep_shape: True
+    BD1500_2_mask:
+      path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_NSP_EQU_IMP_BD1500_2_GID.IMG
+      thresholds: [1]
+      keep_shape: True
+    BD2100_2_mask:
+      path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_NSP_EQU_IMP_BD2100_2_GID.IMG
+      thresholds: [1]
+      keep_shape: True
+  
   pipeline:
     - task: majority
       iterations: 1
-    # - task: boundary
-    #   iterations: 1
-    #   size: 3
+    - task: boundary
+      iterations: 1
+      size: 3
     - task: sieve
       iterations: 1
-    # - task: open
-    #   iterations: 1
+    - task: open
+      iterations: 1
 
   vectorization:
-    driver: pandas # "pandas", "ESRI Shapefile", GeoJSON, GPKG 
+    driver: ESRI Shapefile # "pandas", "ESRI Shapefile", GeoJSON, GPKG 
     cs: GCS
     simplify: 0
-    intermediates: False
+    intermediates: True
     stats: ["area", "mean", "std", "5p", '25p', 'median', '75p', "95p", "min"]
     color: cyan
-    output_dict: \\lasp-store\home\taja6898\Documents\Code\vectroscopy\outputs
+    output_dict: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/meeting_with_Frank
     stack: True
     base: 
       show: True
       stats: []
 
-Stack:
-  name: T1250_Stack
-  stack_path: '/Users/tahnjandai/SPATIAL DATA/Planetary_Data/t1250_mrrsu/t1250_mrrsu_20n078_0327_4.img'
-  parameters:
-    D2300:
-      path: 30
-      thresholds: [0.005, 0.0125, 0.02, 0.0275] # what ran on the arcpy code
-      median:
-        iterations: 1
-  pipeline:
-    - task: majority
-      iterations: 1
-    # - task: boundary
-    #   iterations: 1
-      size: 3
-    - task: sieve
-      iterations: 1
-    # - task: open
-    #   iterations: 1
-  vectorization:
-    driver: ESRI Shapefile # "pandas", "ESRI Shapefile", GeoJSON, GPKG
-    cs: GCS # PCS or GCS or any wkt/proj4
-    simplify: 0
-    # stats: ["area", "mean", "std", "5p", '25p', 'median', '75p', "95p"]
-    stats: ["area", "mean", "std", '25p', 'median', '75p',]
-    colormap: Blues # matplotlib colormap
-    output_dict: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/vectroscopy_outputs
-    base: 
-      show: True
-      stats: True
+# Stack:
+#   name: T1250_Stack
+#   stack_path: '/Users/tahnjandai/SPATIAL DATA/Planetary_Data/t1250_mrrsu/t1250_mrrsu_20n078_0327_4.img'
+#   parameters:
+#     D2300:
+#       path: 30
+#       thresholds: [0.005, 0.0125, 0.02, 0.0275] # what ran on the arcpy code
+#       median:
+#         iterations: 1
+#   pipeline:
+#     - task: majority
+#       iterations: 1
+#     # - task: boundary
+#     #   iterations: 1
+#       size: 3
+#     - task: sieve
+#       iterations: 1
+#     # - task: open
+#     #   iterations: 1
+#   vectorization:
+#     driver: ESRI Shapefile # "pandas", "ESRI Shapefile", GeoJSON, GPKG
+#     cs: GCS # PCS or GCS or any wkt/proj4
+#     simplify: 0
+#     # stats: ["area", "mean", "std", "5p", '25p', 'median', '75p', "95p"]
+#     stats: ["area", "mean", "std", "5p", '25p', 'median', '75p', "95p", "min"]
+#     colormap: Blues # matplotlib colormap
+#     output_dict: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/vectroscopy_outputs
+#     base: 
+#       show: True
+#       stats: True
+  
   # TESTING_INDIC:
   #   name: G2_PolySulfates_TEST_DELIVERY2
   #   path:

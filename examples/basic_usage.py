@@ -18,8 +18,8 @@ def main():
     config_path = '/Users/tahnjandai/Documents/VS_Code/vectroscopy/vectroscopy/config_files/JPL_config.yaml'
     
     # Uncomment to test config loading:
-    gdf = vp.Vectroscopy.from_config(config_path, process='M13_D2300_new_area').vectorize()
-    
+    # gdf = vp.Vectroscopy.from_config(config_path, process="M13_D2300_Very_SimpleB").vectorize()
+
     # Example 2: From an array
     print("\n2. Processing from array...")
     
@@ -27,12 +27,12 @@ def main():
     paths = {
         'windows_tile': r"\\lasp-store\home\taja6898\Documents\Mars_Data\T1250_demo_parameters\T1250_cdodtot_BAL1_D2300.IMG",
         'windows_mc': r"\\lasp-store\home\taja6898\Documents\Mars_Data\MC13_demo_parameters\MC13_BAL1_EQU_IMP_D2300.IMG",
-        'mac_tile': '/Users/tahnjandai/SPATIAL DATA/T1250 Demo Parameters/T1250_cdodtot_BAL1_D2300.IMG',
-        'mac_mc': '/Users/tahnjandai/SPATIAL DATA/MC13_demo_parameters/MC13_BAL1_EQU_IMP_D2300.IMG'
+        'mac_tile': '/Users/tahnjandai/SPATIAL DATA/Planetary_Data/T1250 Demo Parameters/T1250_cdodtot_BAL1_D2300.IMG',
+        'mac_mc': '/Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_BAL1_EQU_IMP_D2300.IMG'
     }
-    
+
     # Try to load data (adjust path based on your system)
-    data_path = paths['mac_tile']  # Change this based on your system
+    data_path = paths['mac_mc']  # Change this based on your system
     
     try:
         with rasterio.open(data_path) as src:
@@ -60,11 +60,11 @@ def main():
     
     # Create vectroscopy instance
     vp_inst = vp.Vectroscopy.from_array(
-        D2300, 
-        thresholds, 
-        crs, 
-        transform, 
-        "D2300"
+        array=D2300, 
+        thresholds=thresholds, 
+        crs=None, 
+        transform=None, 
+        name="D2300"
     # ).config_output(
     #     driver="ESRI Shapefile",
     )
@@ -72,7 +72,7 @@ def main():
     print("4. Running vectorization...")
     
     # Vectorize the data
-    # gdf = vp_inst.vectorize()
+    gdf = vp_inst.vectorize()
     
     print(f"✓ Vectorization complete!")
     if gdf is not None:

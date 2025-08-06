@@ -22,7 +22,8 @@ def list_vectorize(raster_list, thresholds, crs, transform, simplify_tol):
     gdf = gpd.GeoDataFrame()
     for raster, threshold in tqdm(zip(raster_list, thresholds), desc="Vectorizing", total=len(raster_list)):
         gdf = pd.concat([gdf, vectorize_raster(raster, transform=transform, crs=crs, threshold=threshold, simplify_tol=simplify_tol)], ignore_index=True)
-
+    if simplify_tol:
+        gdf.geometry = gdf.geometry.simplify_coverage(simplify_tol)
     return gdf
 
 def vectorize_raster(raster, crs=None, transform=None, threshold=None, simplify_tol=0):
@@ -58,7 +59,7 @@ def vectorize_raster(raster, crs=None, transform=None, threshold=None, simplify_
         {"value": vals, "Threshold": threshold, "geometry": geoms},
         crs=crs
     )
-    if simplify_tol:
-        # gdf.geometry = gdf.geometry.simplify(simplify_tol, preserve_topology=True)
-        gdf.geometry = gdf.geometry.simplify_coverage(simplify_tol)
+    # if simplify_tol:
+    #     # gdf.geometry = gdf.geometry.simplify(simplify_tol, preserve_topology=True)
+    #     gdf.geometry = gdf.geometry.simplify_coverage(simplify_tol)
     return gdf
