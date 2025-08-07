@@ -39,11 +39,10 @@ class Vectorizer:
         start_time = time.time()
         
         # Vectorize rasters
-        gdf = vo.list_vectorize(raster_list, thresholds, crs, transform, simplification_level)
-        
+        gdf = vo.list_vectorize(raster_list, thresholds, crs, transform)
+
         # Calculate zonal statistics
-        gdf = vo.list_zonal_stats(gdf, param_list, transform, stats_list)
-        
+        gdf = vo.list_zonal_stats(gdf, param_list, stats_list, simplification_level)
         end_time = time.time()
         print(f"Vectorization took {end_time - start_time:.2f} seconds")
         

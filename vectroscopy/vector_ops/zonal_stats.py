@@ -2,8 +2,10 @@ import geopandas as gpd
 import pandas as pd
 import rasterio
 from exactextract import exact_extract
+import time
+from .. import file_handler as fh
 
-def list_zonal_stats(polygons, param_list, transform, stats_list):
+def list_zonal_stats(polygons, param_list, stats_list, simplification_level):
     """
     Calculate zonal statistics for a list of polygons and parameters.
     
@@ -17,23 +19,15 @@ def list_zonal_stats(polygons, param_list, transform, stats_list):
     - list: Zonal statistics for each polygon.
     """
     results = []
-
-    x_res = transform.a
-    y_res = abs(transform.e)  # y res is negative for north-up images
-    pixel_area = x_res * y_res
     area = False
-    # gdf = combine_polygons(polygons[1:])
-    # gdf = polygons[0:2]
     results = gpd.GeoDataFrame()
     for param in param_list:
         if "area" in stats_list:
             stats_list.remove("area")
             area = True
         stats_config = config_stats(stats_list, param.name)  # Get the configured stats for the parameter
-        
-        # raster_path = get_tiled_raster_path(param)
-        temp = zonal_stats(polygons, param, pixel_area, stats_config)
-        # temp = tiled_zonal_stats(gdf, raster_path, stats_config, tile_size=2048, overlap=100, temp_dir=None, cleanup=True, strategy="raster-sequential")
+        temp = zonal_stats(polygons, param, stats_config)
+
         if results.empty:
             results = temp
         else:
@@ -43,38 +37,38 @@ def list_zonal_stats(polygons, param_list, transform, stats_list):
                 # results = results.drop(columns=[f"value_{param.name}"])
             if f"Threshold_{param.name}" in results.columns:
                 results = results.drop(columns=[f"Threshold_{param.name}"])
-
-    # results.geometry = results.geometry.simplify_coverage(150)
+    if simplification_level:
+        results.geometry = results.geometry.simplify_coverage(simplification_level)
     if area:
         results['AREA_SQK'] = results.geometry.area * 0.000001
     return results
 
-def zonal_stats(gdf, param, pixel_area, stats_config):
+def zonal_stats(gdf, param, stats_config):
     """ Calculate zonal statistics for a raster and vector layers."""
     if len(stats_config) != 0:
         empty_gdf = gpd.GeoDataFrame()
         param_name = param.name
-        rast = param.preprocessed_path
+        da = param.preprocessed_path
+        processed_raster_path = fh.FileHandler().create_file(f"{param_name}_processed", "tif", temp=True)
+        start = time.time()
+        da.rio.to_raster(processed_raster_path)
+        end = time.time()
+        print(f"Raster saved in {end - start:.2f} seconds")
         try:
-            with rasterio.open(rast) as src:
+            with rasterio.open(processed_raster_path) as src:
                 temp = exact_extract(
-                src,
-                gdf,
-                stats_config,
-                include_geom=True,
-                include_cols="Threshold",
-                # strategy="raster-sequential",
-                output='pandas',
-                progress=True,
-                max_cells_in_memory=1000000000  # Adjust as needed for large datasets
-            )
+                    src,
+                    gdf,
+                    stats_config,
+                    include_geom=True,
+                    include_cols="Threshold",
+                    # strategy="raster-sequential",
+                    output='pandas',
+                    progress=True,
+                    max_cells_in_memory=1000000000  # Adjust as needed for large datasets
+                )
             # temp = percintile_rename(temp)
             gdf = pd.concat([empty_gdf, temp], ignore_index=True)
-
-            # if pixel_area and pixel_area > 0:
-            #     gdf[f"{param_name}_SQK"] = gdf[f"{param_name}_SQK"] * pixel_area * 0.000001
-            # else:
-            #     gdf = gdf.rename(columns={f"{param_name}_SQK": f"{param_name}_CNT"})
 
             gdf[f'{param_name}_DIF'] = gdf[f"Threshold"] - gdf[f"{param_name}_MIN"]
 
@@ -85,7 +79,7 @@ def zonal_stats(gdf, param, pixel_area, stats_config):
     return gdf
 
 def config_stats(stats_list, param_name):
-    """configure statistics for a list of stats."""
+    """configure statistics for a list of stats to fit exact_extracts specifications."""
     stat_config = []
     stats_map = {
             'mean': f"{param_name}_MEN=mean",

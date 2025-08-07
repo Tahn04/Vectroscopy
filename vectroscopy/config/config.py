@@ -58,6 +58,23 @@ class Config:
             default_path = yaml_file
             self.yaml_file = default_path
             self.load_config()
+    def set_mem_safe(self, mem_safe: bool): # add mem_safe 
+        """
+        Set the memory safety mode for the configuration.
+        
+        Args:
+            mem_safe (bool): Whether to run in memory-safe mode.
+        """
+        self.mem_safe = mem_safe
+
+    def get_mem_safe(self) -> bool:
+        """
+        Get the memory safety mode for the configuration.
+        
+        Returns:
+            bool: True if memory-safe mode is enabled, False otherwise.
+        """
+        return getattr(self, 'mem_safe', False)
 
     # Delegate parameter-related methods to ParameterManager
     def get_parameters_list(self):

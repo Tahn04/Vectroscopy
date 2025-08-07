@@ -8,6 +8,8 @@ from . import raster_processor as rp
 from . import vectorization as vec
 from .. import file_handler as fh
 
+from .. import raster_ops as ro
+
 
 class ProcessingPipeline:
     """
@@ -28,13 +30,14 @@ class ProcessingPipeline:
         self.raster_processor = rp.RasterProcessor(config)
         self.vectorizer = vec.Vectorizer(config)
     
-    def process_file(self):
+    def process_file(self, mem_safe):
         """
         Main entry point for processing a file.
         
         Returns:
             GeoDataFrame or None: Processed vector data
         """
+        self.config.set_mem_safe(mem_safe)
         process_list = self.config.process_list
         for process in tqdm(process_list):
             try:
@@ -74,7 +77,7 @@ class ProcessingPipeline:
         self.transform = target_param.transform
 
         # Create combined mask
-        complete_mask = self.raster_processor.complete_mask(param_list, post_processing_masks)
+        complete_mask = self.raster_processor.complete_mask(param_list, post_processing_masks) # XR when only one param
         # self.raster_processor._save_raster("Masks", complete_mask, self.crs, self.transform)
         # Apply thresholds
         raster_list = self.raster_processor.threshold(param_list, complete_mask)
@@ -84,6 +87,9 @@ class ProcessingPipeline:
 
         # Apply processing pipeline (filters, etc.)
         raster_list = self.raster_processor.apply_processing_pipeline(raster_list)
+        
+        # rast = raster_list[0].compute()
+        # ro.show_raster(rast, title="Processed Raster")
 
         # Clean rasters with masks
         start_time = time.time()

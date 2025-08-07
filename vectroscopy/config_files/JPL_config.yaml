@@ -1,12 +1,12 @@
-# __GLOBAL_CONFIG__:
-#   pipeline:
-#     - task: majority
-#       iterations: 1
-#       size: 3
-#     - task: open
-#       iterations: 1
+__GLOBAL_CONFIG__:
+  pipeline:
+    - task: majority
+      iterations: 1
+      size: 3
+    - task: open
+      iterations: 1
 
-M13_D2300_Very_SimpleB:
+M13_D2300_Simp_test2:
   path: #/Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters
   parameters:
     D2300:
@@ -40,8 +40,8 @@ M13_D2300_Very_SimpleB:
   vectorization:
     driver: ESRI Shapefile # "pandas", "ESRI Shapefile", GeoJSON, GPKG
     cs: GCS # PCS or GCS or any wkt/proj4
-    simplify: 300
-    intermediates: Falsa
+    simplify: 150
+    intermediates: False
     # stats: ["area", "mean", "std", "5p", '25p', 'median', '75p', "95p"]
     stats: ["area", "mean", "std", "5p", '25p', 'median', '75p', "95p", "min"]
     colormap: Blues # matplotlib colormap
@@ -95,72 +95,72 @@ M13_D2300_Very_SimpleB:
   #     show: True
   #     stats: [] #["area", "mean", "std", "min", "max", '25p', '75p']
 
-PolySulfate_SIV_SB150:
-  path:
-  parameters:
-    BD1900:
-      path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_BAL1_EQU_IMP_BD1900_2.IMG
-      median:
-        iterations: 3
-      thresholds: [0.012, 0.015, 0.017]
-    SINDEX:
-      path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_BAL1_EQU_IMP_SINDEX2.IMG
-      median:
-        iterations: 3
-      thresholds: [0.01, 0.015, 0.02]
+# PolySulfate_BC:
+#   path:
+#   parameters:
+#     BD1900:
+#       path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_BAL1_EQU_IMP_BD1900_2.IMG
+#       median:
+#         iterations: 3
+#       thresholds: [0.012, 0.015, 0.017]
+#     SINDEX:
+#       path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_BAL1_EQU_IMP_SINDEX2.IMG
+#       median:
+#         iterations: 3
+#       thresholds: [0.01, 0.015, 0.02]
   
-  masks:
-    BD1500:
-      path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_BAL1_EQU_IMP_BD1500_2.IMG
-      thresholds: [0.005]
-      median:
-        iterations: 1
-    BD2100:
-      path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_BAL1_EQU_IMP_BD2100_2.IMG
-      thresholds: [0.01]
-      median:
-        iterations: 1
+#   masks:
+#     BD1500:
+#       path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_BAL1_EQU_IMP_BD1500_2.IMG
+#       thresholds: [0.005]
+#       median:
+#         iterations: 1
+#     BD2100:
+#       path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_BAL1_EQU_IMP_BD2100_2.IMG
+#       thresholds: [0.01]
+#       median:
+#         iterations: 1
 
-    BD1900_2_mask:
-      path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_NSP_EQU_IMP_BD1900_2_GID.IMG
-      thresholds: [1]
-      keep_shape: True
-    SINDEX2_mask:
-      path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_NSP_EQU_IMP_SINDEX2_GID.IMG
-      thresholds: [1]
-      keep_shape: True
-    BD1500_2_mask:
-      path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_NSP_EQU_IMP_BD1500_2_GID.IMG
-      thresholds: [1]
-      keep_shape: True
-    BD2100_2_mask:
-      path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_NSP_EQU_IMP_BD2100_2_GID.IMG
-      thresholds: [1]
-      keep_shape: True
+#     BD1900_2_mask:
+#       path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_NSP_EQU_IMP_BD1900_2_GID.IMG
+#       thresholds: [1]
+#       keep_shape: True # This mask is used to keep the shape of the original raster where are the others will be manipulated by the pipeline
+#     SINDEX2_mask:
+#       path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_NSP_EQU_IMP_SINDEX2_GID.IMG
+#       thresholds: [1]
+#       keep_shape: True
+#     BD1500_2_mask:
+#       path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_NSP_EQU_IMP_BD1500_2_GID.IMG
+#       thresholds: [1]
+#       keep_shape: True
+#     BD2100_2_mask:
+#       path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_NSP_EQU_IMP_BD2100_2_GID.IMG
+#       thresholds: [1]
+#       keep_shape: True
   
-  pipeline:
-    - task: majority
-      iterations: 1
-    - task: boundary
-      iterations: 1
-      size: 3
-    - task: sieve
-      iterations: 1
-    - task: open
-      iterations: 1
+#   pipeline:
+#     - task: majority
+#       iterations: 1
+#     - task: boundary
+#       iterations: 1
+#       size: 3
+#     - task: sieve
+#       iterations: 1
+#     - task: open
+#       iterations: 1
 
-  vectorization:
-    driver: ESRI Shapefile # "pandas", "ESRI Shapefile", GeoJSON, GPKG 
-    cs: GCS
-    simplify: 0
-    intermediates: True
-    stats: ["area", "mean", "std", "5p", '25p', 'median', '75p', "95p", "min"]
-    color: cyan
-    output_dict: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/meeting_with_Frank
-    stack: True
-    base: 
-      show: True
-      stats: []
+#   vectorization:
+#     driver: ESRI Shapefile # "pandas", "ESRI Shapefile", GeoJSON, GPKG 
+#     cs: GCS # PCS or GCS
+#     simplify: 0 # Simplification tolerance, 0 means no simplification
+#     intermediates: False
+#     stats: ["area", "mean", "std", "5p", '25p', 'median', '75p', "95p", "min"]
+#     color: cyan
+#     output_dict: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/meeting_with_Frank
+#     stack: True
+#     base: 
+#       show: True
+#       stats: []
 
 # Stack:
 #   name: T1250_Stack

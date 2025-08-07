@@ -116,19 +116,17 @@ class Vectroscopy:
         config.config_files(rast=rast, mask=mask)
         return cls(config)
     
-    def vectorize(self):
+    def vectorize(self, mem_safe=False):
         """
         Vectorizes data. 
 
         Raster data must be the same shape and have the same CRS and transform.
-        
+
         Args:
-            rasts: single raster data or a list of raster data.
-            mask: A mask to apply to the raster data.
-            raster_list: A list of processed raster data.
-            zonal_stats: The zonal statistics for the raster data.
-        
+            mem_safe (bool): Whether to run in a memory-safe mode. This is useful for large datasets but may be slower for smaller datasets.
+
         Returns:
-            List: A list of vectorized geometries.
+            GeoDataFrame: A GeoDataFrame containing the vectorized data.
         """
-        return ProcessingPipeline(self.config).process_file()
+        return ProcessingPipeline(self.config).process_file(mem_safe=mem_safe)
+

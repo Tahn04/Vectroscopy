@@ -53,8 +53,8 @@ class RasterProcessor:
             if mask is not None:
                 preprocessed = preprocessed.where(mask, np.nan)
 
-            preprocessed_path = self._save_raster(f"{param.name}_preprocessed", preprocessed, param.crs, param.transform)
-            param.preprocessed_path = preprocessed_path
+            # preprocessed_path = self._save_raster(f"{param.name}_preprocessed", preprocessed, param.crs, param.transform)
+            param.preprocessed_path = preprocessed
             final = time.time()
             print(f"Raster saved execution time: {final - mid:.2f} seconds")
         
@@ -76,6 +76,7 @@ class RasterProcessor:
         Returns:
             Processed raster list
         """
+        dask = self.config.get_mem_safe()
         show_rasters = False
         ran_tasks = ""
         if show_rasters:
@@ -85,14 +86,13 @@ class RasterProcessor:
             task_name = task.get("task", "")
 
             if "majority" in task_name:
-                raster_list = self._apply_majority_filter(raster_list, task, show_rasters, task_name)
+                raster_list = self._apply_majority_filter(raster_list, task, show_rasters, task_name, dask)
             elif "boundary" in task_name:
-                raster_list = self._apply_boundary_clean(raster_list, task, show_rasters, task_name)
+                raster_list = self._apply_boundary_clean(raster_list, task, show_rasters, task_name, dask)
             elif "sieve" in task_name:
-                raster_list = self._apply_sieve_filter(raster_list, task, show_rasters, task_name)
+                raster_list = self._apply_sieve_filter(raster_list, task, show_rasters, task_name, dask)
             elif "open" in task_name:
-                raster_list = self._apply_binary_opening(raster_list, task, show_rasters, task_name)
-
+                raster_list = self._apply_binary_opening(raster_list, task, show_rasters, task_name, dask)
             if self.intermediates:
                 task_lookup = {"majority": "MAJ", "boundary": "BDR", "sieve": "SIEV", "open": "OPN"}
                 iterations = self.config.get_task_param(task, "iterations")
@@ -115,35 +115,61 @@ class RasterProcessor:
         Returns:
             Cleaned raster list
         """
+        dask = self.config.get_mem_safe()
         if not raster_list:
             return []
-
-        # Convert coverage_mask to numpy once if it's xarray
-        if isinstance(full_mask, xr.DataArray):
-            coverage_mask_np = full_mask.values
-        else:
-            coverage_mask_np = full_mask
-        
-        # Pre-allocate result list
-        base_check = self.config.get_base_check()
-        final_raster_list = []
-        if base_check:
-            final_raster_list.append(coverage_mask_np.astype(np.uint8))
-        
-        # Process rasters
-        for raster in tqdm(raster_list, desc="Cleaning rasters"):
-            if isinstance(raster, np.ndarray):
-                cleaned = raster * coverage_mask_np
-            else:
-                # Handle xarray case
-                if hasattr(raster, 'values'):
-                    cleaned = raster.values * coverage_mask_np
-                else:
-                    cleaned = np.asarray(raster) * coverage_mask_np
+        if dask:
+            coverage_mask_np = full_mask.astype(np.uint8)
+            # Pre-allocate result list
+            base_check = self.config.get_base_check()
+            final_raster_list = []
+            if base_check:
+                final_raster_list.append(coverage_mask_np)
             
-            final_raster_list.append(cleaned)
-        
-        return final_raster_list
+            # Process rasters
+            for raster in tqdm(raster_list, desc="Cleaning rasters"):
+                cleaned = raster * coverage_mask_np
+                
+                final_raster_list.append(cleaned)
+            
+            return final_raster_list
+        else:
+            # Convert coverage_mask to numpy once if it's xarray
+            if isinstance(full_mask, xr.DataArray):
+                coverage_mask_np = full_mask.values
+            else:
+                coverage_mask_np = full_mask
+            
+            # Pre-allocate result list
+            base_check = self.config.get_base_check()
+            final_raster_list = []
+            if base_check:
+                final_raster_list.append(coverage_mask_np.astype(np.uint8))
+            
+            # Process rasters
+            for raster in tqdm(raster_list, desc="Cleaning rasters"):
+                if isinstance(raster, np.ndarray):
+                    cleaned = raster * coverage_mask_np
+                else:
+                    # Handle xarray case
+                    if hasattr(raster, 'values'):
+                        cleaned = raster.values * coverage_mask_np
+                    else:
+                        cleaned = np.asarray(raster) * coverage_mask_np
+                
+                final_raster_list.append(cleaned)
+            
+            return final_raster_list
+    
+    def complete_mask(self, param_list, post_processing_masks=None):
+        """Calculate the complete coverage mask."""
+        coverage_mask = self.calculate_param_coverage_mask(param_list)
+   
+        if post_processing_masks:
+            for mask in post_processing_masks:
+                val = mask.thresholds[0]
+                coverage_mask = ro.clip_raster(coverage_mask, mask.dataset, val=val)
+        return coverage_mask
     
     def calculate_param_coverage_mask(self, param_list):
         """Calculate the coverage mask for the raster data."""
@@ -160,23 +186,17 @@ class RasterProcessor:
         # For multiple parameters, use efficient reduction
         masks = []
         for param in param_list:
-            if isinstance(param, xr.DataArray):
-                mask = ~np.isnan(param.values)
-            else:
-                mask = param.coverage_mask()
+            mask = param.coverage_mask()
             masks.append(mask)
         
-        return np.logical_and.reduce(masks)
-    
-    def complete_mask(self, param_list, post_processing_masks=None):
-        """Calculate the complete coverage mask."""
-        coverage_mask = self.calculate_param_coverage_mask(param_list)
-   
-        if post_processing_masks:
-            for mask in post_processing_masks:
-                val = mask.thresholds[0]
-                coverage_mask = ro.clip_raster(coverage_mask, mask.dataset, val=val)
-        return coverage_mask
+        if isinstance(mask, xr.DataArray):
+            # Keep as xarray DataArray, use logical_and via xarray
+            combined_mask = masks[0]
+            for mask in masks[1:]:
+                combined_mask = combined_mask & mask
+            return combined_mask
+        else:
+            return np.logical_and.reduce(masks)
     
     def get_post_processing_masks(self, param_list):
         """Get parameters that will be applied as masks after processing."""
@@ -260,46 +280,53 @@ class RasterProcessor:
                 param = param.assign_coords(threshold=threshold_list)
                 new_param_thresholded.append(param)
         return new_param_thresholded
-    
-    def _apply_majority_filter(self, raster_list, task, show_rasters, task_name):
+
+    def _apply_majority_filter(self, raster_list, task, show_rasters, task_name, dask):
         """Apply majority filter to raster list."""
         iterations = self.config.get_task_param(task, "iterations") or 1
         size = self.config.get_task_param(task, "size") or 3
-        raster_list = ro.dask_list_majority_filter(raster_list, iterations=iterations, size=size)
+        raster_list = ro.dask_list_majority_filter(raster_list, iterations=iterations, size=size, dask=dask)
         if show_rasters:
             ro.show_raster(raster_list[0], title=f"{task_name} - Processed Raster lowest")
         return raster_list
     
-    def _apply_boundary_clean(self, raster_list, task, show_rasters, task_name):
+    def _apply_boundary_clean(self, raster_list, task, show_rasters, task_name, dask):
         """Apply boundary cleaning to raster list."""
         iterations = self.config.get_task_param(task, "iterations") or 1
         size = self.config.get_task_param(task, "size") or 3
-        raster_list = ro.list_boundary_clean(raster_list, iterations=iterations, radius=size)
+        raster_list = ro.list_boundary_clean(raster_list, iterations=iterations, radius=size, dask=dask)
         if show_rasters:
             ro.show_raster(raster_list[0], title=f"{task_name} - Processed Raster lowest")
         return raster_list
     
-    def _apply_sieve_filter(self, raster_list, task, show_rasters, task_name):
+    def _apply_sieve_filter(self, raster_list, task, show_rasters, task_name, dask):
         """Apply sieve filter to raster list."""
         threshold = self.config.get_task_param(task, "threshold") or 9
         iterations = self.config.get_task_param(task, "iterations") or 1
         connectedness = self.config.get_task_param(task, "connectedness") or 4
-        
-        raster_list = ro.list_sieve_filter_rio(
-            raster_list,
-            iterations=iterations,
-            threshold=threshold,
-            connectedness=connectedness
-        )
+        if dask:
+            raster_list = ro.dask_sieve_filter_optimized(
+                raster_list,
+                iterations=iterations,
+                threshold=threshold,
+                connectedness=connectedness
+            )
+        else:
+            raster_list = ro.list_sieve_filter_rio(
+                raster_list,
+                iterations=iterations,
+                threshold=threshold,
+                connectedness=connectedness
+            )
         if show_rasters:
             ro.show_raster(raster_list[0], title=f"{task_name} - Processed Raster lowest")
         return raster_list
     
-    def _apply_binary_opening(self, raster_list, task, show_rasters, task_name):
+    def _apply_binary_opening(self, raster_list, task, show_rasters, task_name, dask):
         """Apply binary opening to raster list."""
         iterations = self.config.get_task_param(task, "iterations") or 1
         size = self.config.get_task_param(task, "size") or 3
-        raster_list = ro.list_binary_opening(raster_list, iterations=iterations, size=size)
+        raster_list = ro.list_binary_opening(raster_list, iterations=iterations, size=size, dask=dask)
         if show_rasters:
             ro.show_raster(raster_list[0], title=f"{task_name} - Processed Raster lowest")
         return raster_list

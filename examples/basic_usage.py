@@ -18,7 +18,7 @@ def main():
     config_path = '/Users/tahnjandai/Documents/VS_Code/vectroscopy/vectroscopy/config_files/JPL_config.yaml'
     
     # Uncomment to test config loading:
-    # gdf = vp.Vectroscopy.from_config(config_path, process="M13_D2300_Very_SimpleB").vectorize()
+    gdf = vp.Vectroscopy.from_config(config_path, process="M13_D2300_Simp_test2").vectorize()
 
     # Example 2: From an array
     print("\n2. Processing from array...")
@@ -62,17 +62,17 @@ def main():
     vp_inst = vp.Vectroscopy.from_array(
         array=D2300, 
         thresholds=thresholds, 
-        crs=None, 
-        transform=None, 
-        name="D2300"
+        crs=crs, 
+        transform=transform, 
+        name="D2300",
+        process="arcPy"
     # ).config_output(
     #     driver="ESRI Shapefile",
     )
-    
     print("4. Running vectorization...")
     
     # Vectorize the data
-    gdf = vp_inst.vectorize()
+    # gdf = vp_inst.vectorize()
     
     print(f"✓ Vectorization complete!")
     if gdf is not None:

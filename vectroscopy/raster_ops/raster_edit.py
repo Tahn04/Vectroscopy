@@ -42,7 +42,7 @@ def xarray_full_threshold_concat(xr_data, thresholds):
     Apply multiple thresholds and return as a single DataArray with threshold dimension.
     """
     results = []
-    for t in tqdm(thresholds, desc="Applying thresholds"):
+    for t in tqdm(thresholds, desc="Applying thresholds to xarray"):
         binary_result = (xr_data > t).astype(xr_data.dtype)
         results.append(binary_result)
     
@@ -113,10 +113,7 @@ def assign_thresholds_to_params(param_thresholded):
 def clip_raster(raster, mask, val=1):
         """Masks the raster data using a boolean mask or a value - optimized."""
         # Create boolean mask efficiently
-        if val:
-            if isinstance(mask, xr.DataArray):
-                bool_mask = mask != val
-            else:
+        if isinstance(val, int):
                 bool_mask = mask != val
         else:
             bool_mask = mask

@@ -57,11 +57,11 @@ class Parameter:
             elif crs is None:
                 # Default to a generic CRS if none provided
                 warnings.warn(
-                    "No CRS provided. Using EPSG:4326 (WGS84) as default. "
+                    "No CRS provided. Using EPSG:3857 (Web Mercator) as default. "
                     "This may not be appropriate for your data's actual coordinate system.",
                     UserWarning
                 )
-                crs = "EPSG:4326"
+                crs = "EPSG:3857"
             self.crs = crs 
 
             if not isinstance(array, da.Array):
