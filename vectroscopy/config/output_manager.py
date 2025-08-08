@@ -17,23 +17,45 @@ class OutputManager:
         self.stats = None
         self.output_filename = None
         self.process_manager = ProcessManager(self.config)
-    
+        self.default_output_config = {}
+        self.mem_safe = None  
+
+    def get_mem_safe(self):
+        """Get the memory safety setting for the current process."""
+        if hasattr(self, 'mem_safe') and self.mem_safe is not None: # attributes are then setting from array
+            return self.mem_safe
+
+        process = self.process_manager.get_current_process()
+        if process['vectorization'].get('mem_safe', None):
+            return process['vectorization']['mem_safe']
+        else:
+            return self.default_output_config.get('mem_safe', False)
+
+    def set_mem_safe(self, mem_safe):
+        """Set the memory safety setting for the current process."""
+        if not isinstance(mem_safe, bool):
+            raise ValueError("mem_safe must be a boolean value")
+        self.mem_safe = mem_safe
+        # Also update the current process in the config
+        process = self.process_manager.get_current_process()
+        process['vectorization']['mem_safe'] = mem_safe
+
     def get_output_path(self):
         """Get the output path for the current process."""
         if hasattr(self, 'output_path') and self.output_path:
             return self.output_path
     
         process = self.process_manager.get_current_process()
-
         if process['vectorization'].get('output_dict', False):
             return process['vectorization']['output_dict']
+        elif self.default_output_config:
+            return self.default_output_config.get('output_dict', os.getcwd())
         return os.getcwd()
 
     def get_driver(self):
         """Get the driver for the current process."""
         if hasattr(self, 'driver') and self.driver:
             return self.driver
-            
         try:
             process = self.process_manager.get_current_process()
 
@@ -97,8 +119,10 @@ class OutputManager:
     def get_color(self):
         """Get the color for the current process."""
         process = self.process_manager.get_current_process()
-        
-        return process['vectorization'].get('color', None)
+        if process['vectorization'].get('color', None):
+            return process['vectorization']['color']
+        else:
+            return self.default_output_config.get('color', None)
 
     def get_stats(self):
         """Get the statistics configuration for the current process."""
@@ -107,10 +131,14 @@ class OutputManager:
             
         try:
             process = self.process_manager.get_current_process()
-            
-            return process['vectorization'].get('stats', [])
+            vector_stats = process['vectorization'].get('stats', None)
+            if vector_stats is not None:
+                return vector_stats
+            default_stats = self.default_output_config.get('stats', None)
+            if default_stats is not None:
+                return default_stats
+            return []
         except (ValueError, KeyError):
-            # If current process is not set, return empty list
             return []
     
     def get_base_check(self):

@@ -28,7 +28,7 @@ source .venv/bin/activate  # Linux/Mac
 .venv\Scripts\activate     # Windows
 
 pip install -e .
-
-or 
-
+```
+For pip installation. Only on TestPyPI at the moment. Check https://test.pypi.org/project/vectroscopy/:
+```bash
 pip install --index-url https://test.pypi.org/simple/ --extra-index-url https://pypi.org/simple/ vectroscopy

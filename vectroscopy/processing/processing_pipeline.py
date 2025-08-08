@@ -30,14 +30,13 @@ class ProcessingPipeline:
         self.raster_processor = rp.RasterProcessor(config)
         self.vectorizer = vec.Vectorizer(config)
     
-    def process_file(self, mem_safe):
+    def process_file(self):
         """
         Main entry point for processing a file.
         
         Returns:
             GeoDataFrame or None: Processed vector data
         """
-        self.config.set_mem_safe(mem_safe)
         process_list = self.config.process_list
         for process in tqdm(process_list):
             try:

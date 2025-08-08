@@ -11,7 +11,7 @@ class ProcessManager:
         self.config = config_instance
         # Initialize curr_process from the config instance if it exists
         self.curr_process = getattr(config_instance, 'process', None)
-        self.default_process = None
+        self.default_process = {}
 
     def set_current_process(self, process_name):
         """Set the current process name."""
@@ -98,9 +98,10 @@ class ProcessManager:
 
     def get_pipeline(self):
         """Get the pipeline steps for the current process."""
-        # default = self.get_nested(self.default_process, 'pipeline', default=[])
-        default = []
-        return self.get_nested('processes', self.curr_process, 'pipeline', default=default)
+        pipeline = self.get_nested('processes', self.curr_process, 'pipeline')
+        if pipeline is not None:
+            return pipeline
+        return self.default_process.get('pipeline', [])
 
     def get_dir_path(self):
         """Get the directory path for the current process."""

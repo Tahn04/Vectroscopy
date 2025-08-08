@@ -164,7 +164,8 @@ class Parameter:
         return ro.get_raster_thresholds(self.dataset, thresholds)
 
 class Mask(Parameter):
-    def __init__(self, name: str, raster_path=None, array=None, crs=None, transform=None, threshold=None):
+    def __init__(self, name: str, raster_path=None, array=None, crs=None, transform=None, threshold=None, keep_shape=False):
+        """ Initialize a mask parameter."""
         super().__init__(name, raster_path, array, crs, transform, threshold)
         self.mask = True
-        self.keep_shape = False
+        self.keep_shape = keep_shape

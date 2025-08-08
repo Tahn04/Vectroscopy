@@ -6,7 +6,7 @@ from affine import Affine
 from rasterio.features import shapes
 from shapely.geometry import shape
 
-def list_vectorize(raster_list, thresholds, crs, transform, simplify_tol):
+def list_vectorize(raster_list, thresholds, crs, transform):
     """
     Vectorizes a list of rasters using corresponding threshold values.
 
@@ -15,29 +15,29 @@ def list_vectorize(raster_list, thresholds, crs, transform, simplify_tol):
     - thresholds (list of float or int): Threshold values associated with each raster.
     - crs: Coordinate Reference System (e.g., from rasterio).
     - transform: Affine transform (e.g., from rasterio).
-    - simplify_tol: Simplification tolerance in map units.
 
     Returns:
     - List of GeoDataFrames
     """
     gdf = gpd.GeoDataFrame()
     for raster, threshold in tqdm(zip(raster_list, thresholds), desc="Vectorizing", total=len(raster_list)):
-        gdf = pd.concat([gdf, vectorize_raster(raster, transform=transform, crs=crs, threshold=threshold, simplify_tol=simplify_tol)], ignore_index=True)
+        gdf = pd.concat([gdf, vectorize_raster(raster, transform=transform, crs=crs, threshold=threshold)], ignore_index=True)
     # if simplify_tol:
     #     gdf = safe_simplify_coverage(gdf, simplify_tol)
     return gdf
 
-def vectorize_raster(raster, crs=None, transform=None, threshold=None, simplify_tol=0):
+def vectorize_raster(raster, crs=None, transform=None, threshold=None):
     """
     Convert a binary raster (numpy array or xarray.DataArray) to a GeoDataFrame with geometries.
     """
-    # Convert xarray.DataArray to numpy array if needed
+    import sys
     if hasattr(raster, "values"):
+        raster = raster.astype("uint8")
         arr = raster.values
     else:
-        arr = raster
-
-    arr = arr.astype("uint8")
+        arr = raster.astype("uint8")
+    print(sys.getsizeof(arr), "bytes in raster array")
+    # arr = arr.astype("uint8")
     # Ensure transform is an Affine object
     if transform is not None and not isinstance(transform, Affine):
         transform = Affine(transform[1], transform[2], transform[0],
@@ -45,7 +45,10 @@ def vectorize_raster(raster, crs=None, transform=None, threshold=None, simplify_
     elif transform is None:
         raise ValueError("Transform must be provided.")
 
-    results = shapes(arr, mask=arr.astype(bool), transform=transform)
+    results = shapes(arr, mask=arr, transform=transform)
+
+    del arr, raster
+
     geoms = []
     vals = []
     for geom, val in results:

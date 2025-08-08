@@ -5,6 +5,17 @@ __GLOBAL_CONFIG__:
       size: 3
     - task: open
       iterations: 1
+  
+  vectorization:
+    driver: ESRI Shapefile # "pandas", "ESRI Shapefile", GeoJSON, GPKG
+    stats: ["area", "mean", "std", "5p", '25p', 'median', '75p', "95p"]
+
+# __GLOBAL_DEFAULT__:
+#   masks: 
+#     D2300_GID:
+#       path: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_NSP_EQU_IMP_D2300_GID.IMG
+#       thresholds: [1]
+#       keep_shape: True
 
 M13_D2300_Simp_test2:
   path: #/Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters
@@ -29,21 +40,22 @@ M13_D2300_Simp_test2:
       keep_shape: True
 
   pipeline:
-    - task: majority
-      iterations: 1
-    # - task: boundary
+    # - task: majority
     #   iterations: 1
-    - task: sieve
-      iterations: 1
-    # - task: open
+    # # - task: boundary
+    # #   iterations: 1
+    # - task: sieve
     #   iterations: 1
+    # # - task: open
+    # #   iterations: 1
   vectorization:
-    driver: ESRI Shapefile # "pandas", "ESRI Shapefile", GeoJSON, GPKG
+    mem_safe: True
+    driver: pandas # "pandas", "ESRI Shapefile", GeoJSON, GPKG
     cs: GCS # PCS or GCS or any wkt/proj4
     simplify: 150
     intermediates: False
     # stats: ["area", "mean", "std", "5p", '25p', 'median', '75p', "95p"]
-    stats: ["area", "mean", "std", "5p", '25p', 'median', '75p', "95p", "min"]
+    # stats: ["area", "mean", "std", "5p", '25p', 'median', '75p', "95p", "min"]
     colormap: Blues # matplotlib colormap
     output_dict: /Users/tahnjandai/SPATIAL DATA/Planetary_Data/meeting_with_Frank
     base: 

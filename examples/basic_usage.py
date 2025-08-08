@@ -39,7 +39,12 @@ def main():
             D2300 = src.read(1, masked=True).filled(np.nan)
             transform = src.transform
             crs = src.crs
-            
+
+        with rasterio.open('/Users/tahnjandai/SPATIAL DATA/Planetary_Data/MC13_demo_parameters/MC13_NSP_EQU_IMP_D2300_GID.IMG') as src:
+            D2300_GID = src.read(1)
+            GID_transform = src.transform
+            GID_crs = src.crs
+
         print(f"Loaded data shape: {D2300.shape}")
         
     except FileNotFoundError:
@@ -66,6 +71,13 @@ def main():
         transform=transform, 
         name="D2300",
         process="arcPy"
+    ).add_mask(
+        array=D2300_GID,  # No mask for this example
+        crs=GID_crs,
+        transform=GID_transform,
+        name="D2300_GID",
+        threshold=1,
+        keep_shape=True
     # ).config_output(
     #     driver="ESRI Shapefile",
     )

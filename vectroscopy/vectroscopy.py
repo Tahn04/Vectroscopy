@@ -59,7 +59,7 @@ class Vectroscopy:
         self.config.add_parameter(array=array, crs=crs, transform=transform, name=name, thresholds=thresholds)
         return self
 
-    def add_mask(self, array=None, crs=None, transform=None, name=None, threshold=None):
+    def add_mask(self, array=None, crs=None, transform=None, name=None, threshold=None, keep_shape=False):
         """
         Add a mask to the existing configuration.
 
@@ -69,14 +69,15 @@ class Vectroscopy:
             transform: Affine transformation
             name: Name for the parameter
             thresholds: Threshold values for this parameter
-            
+            keep_shape: Whether the mask should be applied before the generalization
+    
         Returns:
             self: Returns self to enable method chaining
         """
-        self.config.add_mask(array=array, crs=crs, transform=transform, name=name, threshold=threshold)
+        self.config.add_mask(array=array, crs=crs, transform=transform, name=name, threshold=threshold, keep_shape=keep_shape)
         return self
 
-    def config_output(self, stats=None, show_base=None, base_stats=None, driver=None, output_path=None):
+    def config_output(self, mem_safe=False, stats=None, show_base=None, base_stats=None, driver=None, output_path=None):
         """
         Configure the output settings for the Vectroscopy instance.
 
@@ -95,6 +96,7 @@ class Vectroscopy:
         self.config.base_stats = base_stats
         self.config.driver = driver
         self.config.output_path = output_path
+        self.config.set_mem_safe(mem_safe)
         return self
 
     @classmethod
@@ -116,7 +118,7 @@ class Vectroscopy:
         config.config_files(rast=rast, mask=mask)
         return cls(config)
     
-    def vectorize(self, mem_safe=False):
+    def vectorize(self):
         """
         Vectorizes data. 
 
@@ -128,5 +130,5 @@ class Vectroscopy:
         Returns:
             GeoDataFrame: A GeoDataFrame containing the vectorized data.
         """
-        return ProcessingPipeline(self.config).process_file(mem_safe=mem_safe)
+        return ProcessingPipeline(self.config).process_file()
 

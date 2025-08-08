@@ -27,8 +27,8 @@ def main():
     # Process command
     process_parser = subparsers.add_parser("process", help="Process raster data")
     process_parser.add_argument("--config", required=True, help="Path to configuration file")
-    process_parser.add_argument("--output", help="Output directory")
-    
+    process_parser.add_argument("--process", help="Process name")
+
     # Config command
     config_parser = subparsers.add_parser("config", help="Configuration file management")
     config_subparsers = config_parser.add_subparsers(dest="config_action", help="Config actions")
@@ -49,7 +49,7 @@ def main():
     if args.command == "demo":
         run_demo(args.data_path)
     elif args.command == "process":
-        run_process(args.config, args.output)
+        run_process(args.config, args.process)
     elif args.command == "config":
         manage_config(args.config_action, getattr(args, 'path', None), getattr(args, 'template', None))
     elif args.command == "version":
@@ -102,7 +102,7 @@ def run_demo(data_path=None):
         print(f"Demo failed: {e}")
         sys.exit(1)
 
-def run_process(config_path, output_dir=None):
+def run_process(config_path, process_name=None):
     """Process raster data using configuration file."""
     print(f"Processing with config: {config_path}")
     
@@ -110,15 +110,11 @@ def run_process(config_path, output_dir=None):
         from . import Vectroscopy
         
         # Load and process using config
-        gdf = Vectroscopy.from_config(config_path).vectorize()
-        
-        if output_dir:
-            output_path = Path(output_dir) / "processed_output.shp"
-            gdf.to_file(output_path)
-            print(f"Results saved to: {output_path}")
+        gdf = Vectroscopy.from_config(config_path, process_name).vectorize()
+        if gdf is not None:
+            print(f"Processed data with {len(gdf)} vector features")
         else:
-            print(f"Processing completed. Generated {len(gdf)} features.")
-            
+            print("Check the output directory for generated files.")
     except Exception as e:
         print(f"Processing failed: {e}")
         sys.exit(1)

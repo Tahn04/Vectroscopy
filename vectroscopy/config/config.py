@@ -65,7 +65,7 @@ class Config:
         Args:
             mem_safe (bool): Whether to run in memory-safe mode.
         """
-        self.mem_safe = mem_safe
+        self.output_manager.set_mem_safe(mem_safe)
 
     def get_mem_safe(self) -> bool:
         """
@@ -74,7 +74,7 @@ class Config:
         Returns:
             bool: True if memory-safe mode is enabled, False otherwise.
         """
-        return getattr(self, 'mem_safe', False)
+        return self.output_manager.get_mem_safe()
 
     # Delegate parameter-related methods to ParameterManager
     def get_parameters_list(self):
@@ -101,7 +101,7 @@ class Config:
 
         return self.parameter_manager.add_parameter(array, thresholds, crs, transform, name, median_iterations, median_size)
 
-    def add_mask(self, array=None, crs=None, transform=None, name=None, threshold=None):
+    def add_mask(self, array=None, crs=None, transform=None, name=None, threshold=None, keep_shape=False):
         """Add a new mask to the configuration."""
         # Type validation
         if array is not None and not hasattr(array, 'shape'):
@@ -113,7 +113,7 @@ class Config:
         if threshold is not None and not isinstance(threshold, (int, float)):
             raise ValueError("'threshold' must be a number")
         
-        return self.parameter_manager.add_mask(array, crs, transform, name, threshold)
+        return self.parameter_manager.add_mask(array, crs, transform, name, threshold, keep_shape=keep_shape)
 
     def config_array(self, param, crs, transform, mask=None):
         """Initialize the configuration with an array and its metadata."""
@@ -360,7 +360,9 @@ class Config:
             if 'pipeline' in process_config:
                 pipeline = process_config['pipeline']
                 if not isinstance(pipeline, list):
-                    raise ValueError(f"Process '{process_name}': 'pipeline' must be a list")
+                    pipeline = self.process_manager.get_pipeline()
+                    if not pipeline:
+                        raise ValueError(f"Process '{process_name}': 'pipeline' is missing or must be a list")
                 
                 for i, step in enumerate(pipeline):
                     if not isinstance(step, dict):
@@ -369,12 +371,14 @@ class Config:
                         raise ValueError(f"Process '{process_name}': pipeline step {i} must have a 'task' field")
             
             # Validate output section
-            if 'output' in process_config:
-                output = process_config['output']
-                if not isinstance(output, dict):
-                    raise ValueError(f"Process '{process_name}': 'output' must be a dictionary")
+            if 'vectorization' in process_config:
+                vectorization_config = process_config['vectorization']
+                if not isinstance(vectorization_config, dict):
+                    raise ValueError(f"Process '{process_name}': 'vectorization' must be a dictionary")
             if process_name == "__GLOBAL__" or process_name == "__GLOBAL_CONFIG__":
                 self.process_manager.default_process = process_config
+                if "vectorization" in process_config:
+                    self.output_manager.default_output_config = process_config["vectorization"]
 
     def _validate_global_settings(self):
         """Validate global configuration settings."""

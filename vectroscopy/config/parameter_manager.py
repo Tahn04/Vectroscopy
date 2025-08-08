@@ -51,7 +51,7 @@ class ParameterManager:
         param.median_config = {"size": median_size, "iterations": median_iterations}
         self.params.append(param)
     
-    def add_mask(self, array=None, crs=None, transform=None, name=None, threshold=None):
+    def add_mask(self, array=None, crs=None, transform=None, name=None, threshold=None, keep_shape=False):
         """
         Add a new mask to the configuration.
 
@@ -73,7 +73,8 @@ class ParameterManager:
             array=array,
             crs=crs,
             transform=transform,
-            threshold=threshold
+            threshold=threshold,
+            keep_shape=keep_shape
         )
         self.params.append(mask)
     

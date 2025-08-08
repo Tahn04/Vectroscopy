@@ -70,7 +70,7 @@ def zonal_stats(gdf, param, stats_config):
             # temp = percintile_rename(temp)
             gdf = pd.concat([empty_gdf, temp], ignore_index=True)
 
-            gdf[f'{param_name}_DIF'] = gdf[f"Threshold"] - gdf[f"{param_name}_MIN"]
+            # gdf[f'{param_name}_DIF'] = gdf[f"Threshold"] - gdf[f"{param_name}_MIN"]
 
             float_cols = gdf.select_dtypes(include=['float']).columns
             gdf[float_cols] = gdf[float_cols].round(5) 
