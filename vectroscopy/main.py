@@ -1,0 +1,102 @@
+import vectroscopy as vp
+import rasterio
+import numpy as np
+# from osgeo import gdal, ogr, osr
+
+def main():
+    
+    """From a config file"""
+    config_path = r"\\lasp-store\home\taja6898\Documents\Code\vectroscopy\config\custom_config.yaml"
+
+    # gdf = vp.Vectroscopy.from_config(config_path, process="D2300").vectorize() 
+    
+    """From an array"""
+    path = r"\\lasp-store\home\taja6898\Documents\Mars_Data\T1250_demo_parameters\T1250_cdodtot_BAL1_D2300.IMG"
+    mc_path = r"\\lasp-store\home\taja6898\Documents\Mars_Data\MC13_demo_parameters\MC13_BAL1_EQU_IMP_D2300.IMG"
+    lat_path = r"\\lasp-store\home\taja6898\Documents\Mars_Data\LatitudeBands_demo_parameters\MC_789ABCDEFGHIJKLM_BAL1_EQU_IMP_D2300_MOS_IMP.IMG"
+    bd_path = r"\\lasp-store\home\taja6898\Documents\Mars_Data\LatitudeBands_demo_parameters\MC_789ABCDEFGHIJKLM_BAL1_EQU_IMP_BD1500_2_MOS_IMP.IMG"
+    mc_bd_path = r"\\lasp-store\home\taja6898\Documents\Mars_Data\MC13_demo_parameters\MC13_BAL1_EQU_IMP_BD1500_2.IMG"
+    mac_tile_path = '/Users/tahnjandai/SPATIAL DATA/T1250 Demo Parameters/T1250_cdodtot_BAL1_D2300.IMG'
+    mac_mc_path = '/Users/tahnjandai/SPATIAL DATA/MC13_demo_parameters/MC13_BAL1_EQU_IMP_D2300.IMG'
+    # raster = gdal.Open(path)
+    # band = raster.GetRasterBand(1)
+    # band_array = band.ReadAsArray()
+    # nodata = band.GetNoDataValue()
+    # band_array[band_array == nodata] = np.nan
+    # gdal_crs = raster.GetProjection()
+    # gdal_transform = raster.GetGeoTransform()
+
+    with rasterio.open(mac_tile_path) as src:
+        D2300 = src.read(1, masked=True).filled(np.nan)
+        transform = src.transform
+        crs = src.crs
+    # with rasterio.open(mc_bd_path) as src:
+    #     BD1500_2 = src.read(1, masked=True).filled(np.nan)
+    #     transform = src.transform
+    #     crs = src.crs
+    # thresholds = ['70p', '80p', '90p']
+    thresholds = [0.005, 0.0125, 0.02, 0.0275] #["95p", "99p"]
+    threshold = [0.005]
+
+    # gdf = vp.Vectroscopy.from_array(
+    #     D2300, 
+    #     thresholds, 
+    #     crs, 
+    #     transform, 
+    #     name,
+    # ).add_mask(
+    #     BD1500_2,
+    #     crs=crs,
+    #     transform=transform,
+    #     name="BD1500_2",
+    #     threshold=threshold
+    # ).vectorize()
+
+    vp_inst = vp.Vectroscopy.from_array(
+        D2300, 
+        thresholds, 
+        crs, 
+        transform, 
+        "D2300",
+    # ).add_mask(
+    #     BD1500_2,
+    #     crs=crs,
+    #     transform=transform,
+    #     name="BD1500_2",
+    #     threshold=threshold
+    # ).config_output(
+    #     stats=["area", "mean", "std", '5', 'median', '95'],
+    #     show_base=True,
+    #     base_stats=True,
+    #     driver="ESRI Shapefile",
+    #     output_path=r"\\lasp-store\home\taja6898\Documents\Code\vectroscopy\outputs"
+    )
+
+    # vp_inst.add_mask(
+    #     BD1500_2,
+    #     crs=crs,
+    #     transform=transform,
+    #     name="BD1500_2",
+    #     threshold=threshold
+    # )
+
+    gdf = vp_inst.vectorize()
+
+    """from specific files"""
+    # vp.Vectroscopy.from_files(
+    #     rast={
+    #         "D2300": (path, [0.005, 0.0075, 0.01, 0.0125, 0.015])
+    #     },
+    #     mask=None
+    # ).vectorize()
+
+
+if __name__ == "__main__":
+    main()
+
+# mars_gcs = {
+#     "proj": "longlat",
+#     "a": 3396190,
+#     "rf": 169.894447223612,
+#     "no_defs": True
+# }

@@ -1,7 +1,8 @@
-from .tile_processing import ProcessingPipeline
+from .processing import ProcessingPipeline
 from .config import Config
 
 class Vectroscopy:
+    """Main class for handling spectroscopy data processing."""
     def __init__(self, config):
         self.config = config
 
@@ -18,11 +19,10 @@ class Vectroscopy:
             Vectroscopy: An instance of the Vectroscopy class.
         """
         config = Config(config_yaml, process=process)
-        config.config_yaml()
         return cls(config)
-    
+
     @classmethod
-    def from_array(cls, array, thresholds=None, crs=None, transform=None, name=None):
+    def from_array(cls, array, thresholds=None, crs=None, transform=None, name=None, median_iterations=1, median_size=3, process="default"):
         """
         Create an instance of Vectroscopy from an array.
         
@@ -32,15 +32,16 @@ class Vectroscopy:
             crs: Coordinate Reference System of the raster data.
             transform: Affine transformation for the raster data.
             name: Name for the parameter.
-        
+            median_iterations: Number of iterations for the median filter.
+            median_size: Size of the median filter.
+
         Returns:
             Vectroscopy: An instance of the Vectroscopy class.
         """
-        config = Config(process="default")  # could be where you have multiple processing profiles.
-        # config.config_array(param=rast, mask=mask, crs=crs, transform=transform)
-        config.add_parameter(array=array, thresholds=thresholds, crs=crs, transform=transform, name=name)
+        config = Config(process=process)  # could be where you have multiple processing profiles.
+        config.add_parameter(array=array, thresholds=thresholds, crs=crs, transform=transform, name=name, median_iterations=median_iterations, median_size=median_size)
         return cls(config)
-    
+
     def add_param(self, array, thresholds=None, crs=None, transform=None, name=None):
         """
         Add another parameter to the existing configuration.
@@ -57,8 +58,8 @@ class Vectroscopy:
         """
         self.config.add_parameter(array=array, crs=crs, transform=transform, name=name, thresholds=thresholds)
         return self
-    
-    def add_mask(self, array=None, crs=None, transform=None, name=None, thresholds=None):
+
+    def add_mask(self, array=None, crs=None, transform=None, name=None, threshold=None, keep_shape=False):
         """
         Add a mask to the existing configuration.
 
@@ -68,14 +69,15 @@ class Vectroscopy:
             transform: Affine transformation
             name: Name for the parameter
             thresholds: Threshold values for this parameter
-            
+            keep_shape: Whether the mask should be applied before the generalization
+    
         Returns:
             self: Returns self to enable method chaining
         """
-        self.config.add_mask(array=array, crs=crs, transform=transform, name=name, thresholds=thresholds)
+        self.config.add_mask(array=array, crs=crs, transform=transform, name=name, threshold=threshold, keep_shape=keep_shape)
         return self
 
-    def config_output(self, stats, show_base, base_stats, driver, output_path):
+    def config_output(self, mem_safe=False, stats=None, show_base=None, base_stats=None, driver=None, output_path=None):
         """
         Configure the output settings for the Vectroscopy instance.
 
@@ -89,11 +91,12 @@ class Vectroscopy:
         Returns:
             self: Returns self to enable method chaining.
         """
-        self.config.output_stats = stats
+        self.config.stats = stats
         self.config.show_base = show_base
         self.config.base_stats = base_stats
         self.config.driver = driver
         self.config.output_path = output_path
+        self.config.set_mem_safe(mem_safe)
         return self
 
     @classmethod
@@ -120,14 +123,12 @@ class Vectroscopy:
         Vectorizes data. 
 
         Raster data must be the same shape and have the same CRS and transform.
-        
+
         Args:
-            rasts: single raster data or a list of raster data.
-            mask: A mask to apply to the raster data.
-            raster_list: A list of processed raster data.
-            zonal_stats: The zonal statistics for the raster data.
-        
+            mem_safe (bool): Whether to run in a memory-safe mode. This is useful for large datasets but may be slower for smaller datasets.
+
         Returns:
-            List: A list of vectorized geometries.
+            GeoDataFrame: A GeoDataFrame containing the vectorized data.
         """
         return ProcessingPipeline(self.config).process_file()
+

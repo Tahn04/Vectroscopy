@@ -1,0 +1,93 @@
+import os
+import tempfile
+import shutil
+
+class FileHandler:
+    """
+    A singleton class to handle file operations.
+    """
+    _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if cls._instance is None:
+            cls._instance = super(FileHandler, cls).__new__(cls)
+            cls._instance._initialized = False
+        return cls._instance
+
+    def __init__(self):
+        if self._initialized:
+            return
+        self.temp_dir = tempfile.mkdtemp()
+        self.dir_path = None
+        self._initialized = True
+
+    def set_config(self, config):
+        self.config = config
+        self.dir_path = self.config.get_output_path()
+
+    def set_directory(self, dir_path):
+        """
+        Set the directory path for file operations.
+        
+        Args:
+            dir_path (str): Path to the directory.
+        """
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+        self.dir_path = dir_path
+
+    def create_file(self, prefix, suffix, temp=False):
+        """
+        Create a temporary file in the temporary directory.
+
+        Args:
+            prefix (str): Prefix for the temporary file name.
+            suffix (str): Suffix for the temporary file name.
+
+        Returns:
+            str: Path to the created temporary file.
+        """
+        if temp:
+            file_path = os.path.join(self.temp_dir, f"{prefix}_temp.{suffix}")
+        else:
+            file_path = os.path.join(self.dir_path, f"{prefix}.{suffix}")
+        return file_path
+
+    def create_output_filename(self, driver, name, text):
+        """Get the output filename for the current process."""
+        if driver == 'pandas':
+            return None
+        extension_map = {
+            'GeoJSON': 'geojson',
+            'ESRI Shapefile': 'shp',
+            'GPKG': 'gpkg'
+        }
+        file_extension = extension_map.get(driver)
+        if not file_extension:
+            raise ValueError(f"Unknown driver: {driver}")
+        # Simple sanitization: replace spaces with underscores
+        safe_name = name.replace(" ", "_")
+        if text:
+            name = f"{safe_name}_{text}"
+        else:
+            name = safe_name
+        return f"{name}.{file_extension}"
+
+    def get_temp_directory(self):
+        """
+        Get the path to the temporary directory.
+
+        Returns:
+            str: Path to the temporary directory.
+        """
+        return self.temp_dir
+
+    def cleanup(self):
+        """
+        Clean up the temporary directory and its contents.
+        """
+        if self.temp_dir and os.path.exists(self.temp_dir):
+            shutil.rmtree(self.temp_dir)
+        self.temp_dir = None
+        self._initialized = False
+    
